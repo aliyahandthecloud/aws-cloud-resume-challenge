@@ -1,0 +1,35 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Python tests
+        run: pytest
+
+      - name: Package SAM application
+        run: sam package --template-file template.yaml --s3-bucket ${{ secrets.aliyah-and-the-cloud }} --output-template-file packaged.yaml
+
+      - name: Deploy SAM application
+        run: sam deploy --template-file packaged.yaml --stack-name MySAMStack --capabilities CAPABILITY_IAM
+        env:
+          AWS_REGION: 'us-east-2
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
